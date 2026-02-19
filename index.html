@@ -1,0 +1,1306 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projeto Brilho Trend - Otimização Operacional</title>
+    
+    <!-- Framework Tailwind CSS para design moderno e responsivo -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Montserrat (Títulos) e Open Sans (Corpo) -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Open Sans', 'sans-serif'],
+                        display: ['Montserrat', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            dark: '#0f172a',
+                            primary: '#f97316',
+                            accent: '#3b82f6',
+                            light: '#f8fafc',
+                            success: '#10b981',
+                            warning: '#fff7ed',
+                            warningText: '#c2410c',
+                            olist: '#2563eb', 
+                        }
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { background-color: #f8fafc; font-family: 'Open Sans', sans-serif; overflow-x: hidden; scroll-behavior: smooth; }
+        
+        /* Ocultar barra de rolagem na navbar horizontal */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Sistema de Modais */
+        #modalOverlay { transition: opacity 0.3s ease-in-out; display: none; }
+
+        /* Ciclo de Ineficiência - Layout Circular Harmônico */
+        .cycle-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            height: 600px;
+            margin: 0 auto;
+        }
+
+        .cycle-node {
+            position: absolute;
+            width: 155px;
+            text-align: center;
+            transform: translate(-50%, -50%);
+            z-index: 20;
+        }
+
+        /* Coordenadas para os 6 nós ao redor do círculo */
+        .node-1 { top: 10%; left: 50%; }
+        .node-2 { top: 30%; left: 88%; }
+        .node-3 { top: 72%; left: 88%; }
+        .node-4 { top: 92%; left: 50%; }
+        .node-5 { top: 72%; left: 12%; }
+        .node-6 { top: 30%; left: 12%; }
+
+        /* Nó Central: Centralização Perfeita */
+        .center-node {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 210px;
+            height: 210px;
+            background: #0f172a;
+            border: 6px solid #ef4444;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            box-shadow: 0 0 50px rgba(239, 68, 68, 0.4);
+            z-index: 10;
+            text-align: center;
+            padding: 10px;
+        }
+
+        .center-node span { line-height: 1; margin-bottom: 8px; }
+        .center-node h4 { margin: 0; line-height: 1.1; font-weight: 800; font-family: 'Montserrat', sans-serif; }
+
+        .cycle-ring {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 78%;
+            height: 78%;
+            border: 2px dashed #cbd5e1;
+            border-radius: 50%;
+            z-index: 1;
+        }
+
+        /* Tooltips Interativos (Hover) */
+        .tooltip-box {
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.2s, transform 0.2s;
+            pointer-events: none;
+        }
+        .cycle-node:hover .tooltip-box {
+            visibility: visible;
+            opacity: 1;
+            transform: translate(-50%, -10px);
+        }
+
+        /* Cards do Plano de Resolução */
+        .pillar-card {
+            transition: all 0.3s ease;
+            border: 1px solid #f1f5f9;
+        }
+        .pillar-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            border-color: #f97316;
+        }
+
+        @media (max-width: 768px) {
+            .cycle-container { height: auto; display: flex; flex-direction: column; gap: 3rem; align-items: center; padding-top: 2rem; padding-bottom: 2rem;}
+            .cycle-node, .center-node { position: static; transform: none; width: 100%; max-width: 320px; }
+            .cycle-ring, .tooltip-box { display: none; }
+            .center-node { width: 180px; height: 180px; border-radius: 50%; }
+        }
+    </style>
+</head>
+<body class="antialiased font-sans pt-16"> 
+    <!-- Adicionado padding-top (pt-16) ao body para compensar a navbar fixa -->
+
+    <!-- NAVBAR FIXA (Sticky Header) -->
+    <nav class="fixed top-0 left-0 w-full z-50 bg-brand-dark/95 backdrop-blur-md shadow-lg border-b border-white/10">
+        <div class="container mx-auto px-4 md:px-6">
+            <div class="flex items-center justify-between h-16">
+                <!-- Logo Compacto (Visível em Mobile) -->
+                <div class="flex-shrink-0 flex items-center gap-2 md:hidden">
+                    <div class="w-2 h-6 bg-brand-primary rounded-full"></div>
+                    <span class="font-display font-bold text-white text-sm uppercase tracking-wider">Brilho Trend</span>
+                </div>
+
+                <!-- Lista de Links (Scroll horizontal em mobile) -->
+                <div class="flex-1 flex items-center justify-start md:justify-center overflow-x-auto no-scrollbar gap-2 md:gap-6 w-full" id="navbar-links">
+                    
+                    <!-- Botão Início (Novo) - Adicionado ID 'nav-home' -->
+                    <a href="#" id="nav-home" onclick="window.scrollTo({ top: 0, behavior: 'smooth' }); return false;" class="nav-link whitespace-nowrap px-3 py-2 rounded-lg text-[10px] md:text-xs font-bold uppercase tracking-widest text-slate-300 hover:text-white hover:bg-white/10 transition-all border border-transparent flex items-center gap-1">
+                        <i class="ph-bold ph-house"></i> Início
+                    </a>
+
+                    <a href="#cenario" class="nav-link whitespace-nowrap px-3 py-2 rounded-lg text-[10px] md:text-xs font-bold uppercase tracking-widest text-slate-300 hover:text-white hover:bg-white/10 transition-all border border-transparent">
+                        Diagnóstico
+                    </a>
+                    
+                    <a href="#plano-resolucao" class="nav-link whitespace-nowrap px-3 py-2 rounded-lg text-[10px] md:text-xs font-bold uppercase tracking-widest text-slate-300 hover:text-white hover:bg-white/10 transition-all border border-transparent">
+                        Plano de Resolução
+                    </a>
+                    
+                    <a href="#execucao" class="nav-link whitespace-nowrap px-3 py-2 rounded-lg text-[10px] md:text-xs font-bold uppercase tracking-widest text-slate-300 hover:text-white hover:bg-white/10 transition-all border border-transparent">
+                        Execução
+                    </a>
+                    
+                    <a href="#integracao-sucesso" class="nav-link whitespace-nowrap px-3 py-2 rounded-lg text-[10px] md:text-xs font-bold uppercase tracking-widest text-slate-300 hover:text-white hover:bg-white/10 transition-all border border-transparent">
+                        Ecossistema
+                    </a>
+
+                    <a href="#operacao-hoje" class="nav-link whitespace-nowrap px-3 py-2 rounded-lg text-[10px] md:text-xs font-bold uppercase tracking-widest text-slate-300 hover:text-white hover:bg-white/10 transition-all border border-transparent">
+                        Resultado
+                    </a>
+
+                    <a href="#proximos-passos" class="nav-link whitespace-nowrap px-3 py-2 rounded-lg text-[10px] md:text-xs font-bold uppercase tracking-widest text-slate-300 hover:text-white hover:bg-white/10 transition-all border border-transparent">
+                        Próximos Passos
+                    </a>
+
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- MODAL OVERLAY -->
+    <div id="modalOverlay" class="fixed inset-0 z-[100] bg-brand-dark/90 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full shadow-2xl overflow-hidden border-t-[10px] border-brand-primary relative">
+            <button onclick="closeModal()" class="absolute top-4 right-4 text-slate-400 hover:text-brand-dark transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <div class="p-10 text-center">
+                <div id="modalIconContainer" class="text-5xl mb-6"></div>
+                <h3 id="modalTitle" class="font-display font-bold text-2xl text-brand-dark mb-4 uppercase tracking-tight"></h3>
+                <div id="modalContent" class="text-slate-600 leading-relaxed mb-8 text-sm"></div>
+                <button onclick="closeModal()" class="w-full bg-slate-900 hover:bg-brand-primary text-white font-bold py-4 rounded-xl transition-all uppercase tracking-widest text-xs shadow-lg">Entendi</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- HEADER: CAPA -->
+    <header class="bg-brand-dark text-white pt-24 pb-40 px-6 relative overflow-hidden">
+        <!-- Elemento decorativo de fundo -->
+        <div class="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-brand-primary/10 to-transparent pointer-events-none"></div>
+        
+        <div class="max-w-6xl mx-auto relative z-10 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+            
+            <!-- Coluna da Esquerda: Texto e Créditos -->
+            <div>
+                <div class="inline-flex items-center gap-2 bg-brand-primary/20 border border-brand-primary/50 text-brand-primary text-[10px] font-black px-4 py-1.5 rounded-full mb-8 uppercase tracking-[0.2em] shadow-lg backdrop-blur-md">
+                    <span class="w-2 h-2 rounded-full bg-brand-primary animate-pulse"></span>
+                    Relatório Técnico Operacional
+                </div>
+                <h1 class="font-display font-black text-5xl md:text-7xl mb-6 leading-tight uppercase tracking-tighter">Otimização <br><span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-primary to-orange-300">Brilho Trend</span></h1>
+                <p class="text-xl text-slate-400 font-light mb-10 leading-relaxed">Implementação estratégica de ERP, padronização de dados e inteligência logística para escala de Marketplaces.</p>
+                
+                <!-- Créditos do Projeto -->
+                <div class="flex flex-col gap-4 border-l-4 border-brand-primary/20 pl-6 py-2">
+                    <div>
+                        <p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-1">Responsável pelo Projeto</p>
+                        <p class="text-lg font-bold text-white">Gustavo Vergani</p>
+                    </div>
+                    
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs text-slate-500 font-medium italic">Powered by</span>
+                        <a href="https://gemini.google.com/app" target="_blank" rel="noopener noreferrer" class="flex items-center gap-1.5 bg-white/5 px-3 py-1.5 rounded-full border border-white/10 hover:bg-white/10 transition-colors cursor-pointer group/link">
+                            <!-- Logo Google Gemini SVG -->
+                            <svg class="w-5 h-5 group-hover/link:scale-110 transition-transform" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M16.4697 2.04344C16.1879 1.13586 14.8798 1.13586 14.598 2.04344C13.5167 5.52586 10.7167 8.32579 7.23432 9.40711C6.32674 9.68891 6.32674 10.997 7.23432 11.2788C10.7167 12.3601 13.5167 15.16 14.598 18.6424C14.8798 19.55 16.1879 19.55 16.4697 18.6424C17.551 15.16 20.3509 12.3601 23.8333 11.2788C24.7409 10.997 24.7409 9.68891 23.8333 9.40711C20.3509 8.32579 17.551 5.52586 16.4697 2.04344Z" fill="url(#paint0_linear_gemini)"/>
+                                <path opacity="0.6" d="M6.34292 16.9208C6.20202 16.467 5.54795 16.467 5.40705 16.9208C4.86641 18.662 3.46641 20.062 1.72522 20.6026C1.27142 20.7435 1.27142 21.3976 1.72522 21.5385C3.46641 22.0791 4.86641 23.4791 5.40705 25.2203C5.54795 25.6741 6.20202 25.6741 6.34292 25.2203C6.88355 23.4791 8.28355 22.0791 10.0247 21.5385C10.4785 21.3976 10.4785 20.7435 10.0247 20.6026C8.28355 20.062 6.88355 18.662 6.34292 16.9208Z" fill="url(#paint1_linear_gemini)"/>
+                                <defs>
+                                    <linearGradient id="paint0_linear_gemini" x1="15.5338" y1="1.40594" x2="15.5338" y2="19.28" gradientUnits="userSpaceOnUse">
+                                        <stop stop-color="#4E7CFF"/>
+                                        <stop offset="1" stop-color="#F36D6F"/>
+                                    </linearGradient>
+                                    <linearGradient id="paint1_linear_gemini" x1="5.87498" y1="16.6021" x2="5.87498" y2="25.539" gradientUnits="userSpaceOnUse">
+                                        <stop stop-color="#4E7CFF"/>
+                                        <stop offset="1" stop-color="#F36D6F"/>
+                                    </linearGradient>
+                                </defs>
+                            </svg>
+                            <span class="text-sm font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-300 via-purple-300 to-red-300">Google Gemini</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Coluna da Direita: Logo da Empresa -->
+            <div class="hidden md:flex justify-center md:justify-end">
+                <div class="relative group">
+                    <!-- Glow effect suave atrás do logo -->
+                    <div class="absolute -inset-4 bg-brand-primary/10 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition duration-1000"></div>
+                    
+                    <!-- Container Transparente e Suave -->
+                    <div class="relative p-8 rounded-[2rem] transform transition-transform duration-500 hover:scale-105">
+                        <!-- Logo Brilho Trend (Sem inversão de cor, mas com blend mode para mesclar se necessário) -->
+                        <!-- Usando mix-blend-mode para testar suavização sobre fundo escuro se o logo tiver fundo branco -->
+                        <div class="bg-white/90 p-6 rounded-3xl backdrop-blur-sm shadow-lg shadow-black/10">
+                             <img src="https://lh3.googleusercontent.com/d/1pXrWvpvF_m_iGikvlGRvZkyO9KKwhh2d" alt="Logo Brilho Trend" class="w-full max-w-xs object-contain mix-blend-multiply" onerror="this.onerror=null; this.src='https://via.placeholder.com/300x150?text=Logo+Brilho+Trend';">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </header>
+
+    <!-- SECTION 1: CENÁRIO CRÍTICO -->
+    <section id="cenario" class="max-w-6xl mx-auto px-6 -mt-28 relative z-20 mb-32 section-spy">
+        <div class="bg-white rounded-[2.5rem] shadow-2xl p-8 md:p-12 border-l-[12px] border-red-500">
+            <div class="flex items-center gap-4 mb-12">
+                <div class="w-12 h-1.5 bg-red-500 rounded-full"></div>
+                <h2 class="font-display font-extrabold text-3xl text-brand-dark uppercase tracking-tighter">Cenário Crítico (Diagnóstico)</h2>
+            </div>
+
+            <!-- Problemas Interativos -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-24">
+                <div onclick="openModal('sku')" class="cursor-pointer bg-red-50 p-7 rounded-[2rem] border border-red-100 hover:bg-red-100 hover:scale-105 transition-all text-center shadow-sm group">
+                    <div class="text-red-500 text-4xl mb-3 leading-none group-hover:scale-110 transition-transform">&#9442;</div>
+                    <h3 class="font-display font-bold text-xs text-brand-dark uppercase mb-2">SKU's Despadronizados</h3>
+                    <p class="text-[10px] text-slate-500 font-medium tracking-tight">Divergência sistêmica entre canais.</p>
+                </div>
+                <div onclick="openModal('erp')" class="cursor-pointer bg-red-50 p-7 rounded-[2rem] border border-red-100 hover:bg-red-100 hover:scale-105 transition-all text-center shadow-sm group">
+                    <div class="text-red-500 text-4xl mb-3 leading-none group-hover:scale-110 transition-transform">&#9881;</div>
+                    <h3 class="font-display font-bold text-xs text-brand-dark uppercase mb-2">ERP Isolado</h3>
+                    <p class="text-[10px] text-slate-500 font-medium tracking-tight">Sem inteligência multi-canal nativa.</p>
+                </div>
+                <div onclick="openModal('manual')" class="cursor-pointer bg-red-50 p-7 rounded-[2rem] border border-red-100 hover:bg-red-100 hover:scale-105 transition-all text-center shadow-sm group">
+                    <div class="text-red-500 text-4xl mb-3 leading-none group-hover:scale-110 transition-transform">&#9997;</div>
+                    <h3 class="font-display font-bold text-xs text-brand-dark uppercase mb-2">Fluxo Manual</h3>
+                    <p class="text-[10px] text-slate-500 font-medium tracking-tight">Horas perdidas em tarefas repetitivas.</p>
+                </div>
+                <div onclick="openModal('ruptura')" class="cursor-pointer bg-red-50 p-7 rounded-[2rem] border border-red-100 hover:bg-red-100 hover:scale-105 transition-all text-center shadow-sm group">
+                    <div class="text-red-500 text-4xl mb-3 leading-none group-hover:scale-110 transition-transform">&#10060;</div>
+                    <h3 class="font-display font-bold text-xs text-brand-dark uppercase mb-2">Ruptura Total</h3>
+                    <p class="text-[10px] text-slate-500 font-medium tracking-tight">Venda constante de itens já esgotados.</p>
+                </div>
+            </div>
+
+            <!-- Ciclo de Ineficiência -->
+            <div class="border-t border-slate-100 pt-20">
+                <div class="text-center mb-16">
+                    <h3 class="font-display font-black text-2xl text-brand-dark uppercase tracking-widest">O Ciclo de Ineficiência</h3>
+                    <p class="text-slate-400 text-[10px] mt-2 uppercase font-bold tracking-[0.2em]">O feedback negativo que paralisava o negócio</p>
+                </div>
+
+                <div class="cycle-container">
+                    <div class="cycle-ring"></div>
+                    
+                    <!-- Nó Central perfeitamente equilibrado -->
+                    <div class="center-node animate-pulse-slow">
+                        <span class="text-5xl leading-none">&#128274;</span>
+                        <h4 class="uppercase tracking-tighter">OPERAÇÃO <br> TRAVADA</h4>
+                    </div>
+
+                    <!-- Etapas do Ciclo com Tooltips -->
+                    <div class="cycle-node node-1 group">
+                        <div class="bg-white border-2 border-red-200 shadow-xl p-5 rounded-[1.5rem] transition-all group-hover:scale-110 cursor-help">
+                            <span class="text-3xl block mb-1 leading-none">&#128203;</span>
+                            <h5 class="text-[10px] font-black text-brand-dark uppercase">Processo Manual</h5>
+                        </div>
+                        <div class="tooltip-box absolute top-0 left-1/2 w-48 bg-slate-900 text-white text-[10px] p-4 rounded-xl shadow-2xl z-50">
+                            Dependência exclusiva de planilhas e da memória individual da equipe.
+                        </div>
+                    </div>
+
+                    <div class="cycle-node node-2 group">
+                        <div class="bg-white border-2 border-red-300 shadow-xl p-5 rounded-[1.5rem] transition-all group-hover:scale-110 cursor-help">
+                            <span class="text-3xl block mb-1 leading-none">&#128683;</span>
+                            <h5 class="text-[10px] font-black text-brand-dark uppercase">Vendas às Cegas</h5>
+                        </div>
+                        <div class="tooltip-box absolute top-0 left-1/2 w-48 bg-slate-900 text-white text-[10px] p-4 rounded-xl shadow-2xl z-50">
+                            Falta de visibilidade real do estoque disponível para canais de venda.
+                        </div>
+                    </div>
+
+                    <div class="cycle-node node-3 group">
+                        <div class="bg-white border-2 border-red-400 shadow-xl p-5 rounded-[1.5rem] transition-all group-hover:scale-110 cursor-help">
+                            <span class="text-3xl block mb-1 leading-none">&#128230;</span>
+                            <h5 class="text-[10px] font-black text-brand-dark uppercase">Altas Rupturas</h5>
+                        </div>
+                        <div class="tooltip-box absolute top-0 left-1/2 w-48 bg-slate-900 text-white text-[10px] p-4 rounded-xl shadow-2xl z-50">
+                            Cancelamentos massivos por vender itens inexistentes na prateleira.
+                        </div>
+                    </div>
+
+                    <div class="cycle-node node-4 group">
+                        <div class="bg-white border-2 border-red-500 shadow-xl p-5 rounded-[1.5rem] transition-all group-hover:scale-110 cursor-help">
+                            <span class="text-3xl block mb-1 leading-none">&#9888;</span>
+                            <h5 class="text-[10px] font-black text-brand-dark uppercase">Falha Humana</h5>
+                        </div>
+                        <div class="tooltip-box absolute top-0 left-1/2 w-56 bg-slate-900 text-white text-[10px] p-4 rounded-xl shadow-2xl z-50">
+                            Lentidão na inserção manual, ausência de atualização em tempo real e risco de omissão de campos.
+                        </div>
+                    </div>
+
+                    <div class="cycle-node node-5 group">
+                        <div class="bg-white border-2 border-red-600 shadow-xl p-5 rounded-[1.5rem] transition-all group-hover:scale-110 cursor-help">
+                            <span class="text-3xl block mb-1 leading-none">&#128681;</span>
+                            <h5 class="text-[10px] font-black text-brand-dark uppercase">Penalidades</h5>
+                        </div>
+                        <div class="tooltip-box absolute top-0 left-1/2 w-48 bg-slate-900 text-white text-[10px] p-4 rounded-xl shadow-2xl z-50">
+                            Risco iminente de suspensão e queda de reputação nos marketplaces.
+                        </div>
+                    </div>
+
+                    <div class="cycle-node node-6 group">
+                        <div class="bg-white border-2 border-red-100 shadow-xl p-5 rounded-[1.5rem] transition-all group-hover:scale-110 cursor-help">
+                            <span class="text-3xl block mb-1 leading-none">&#128269;</span>
+                            <h5 class="text-[10px] font-black text-brand-dark uppercase">Desestruturação</h5>
+                        </div>
+                        <div class="tooltip-box absolute top-0 left-1/2 w-48 bg-slate-900 text-white text-[10px] p-4 rounded-xl shadow-2xl z-50">
+                            Base de dados fragmentada e códigos sem lógica operacional.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 2: PLANO DE RESOLUÇÃO (ESTRATÉGIA) -->
+    <section id="plano-resolucao" class="max-w-6xl mx-auto px-6 py-20 mb-10 bg-white rounded-[3.5rem] shadow-xl border border-slate-100 section-spy">
+        <div class="text-center mb-20">
+            <h2 class="font-display font-black text-4xl text-brand-dark mb-4 uppercase">Plano de Resolução</h2>
+            <p class="text-lg text-slate-400 max-w-2xl mx-auto font-medium">Os 6 pilares estratégicos aplicados para sanar os problemas e restaurar a saúde do negócio.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+            <!-- Pilar 1 -->
+            <div class="pillar-card bg-slate-50 p-10 rounded-[2.5rem] flex flex-col items-center text-center">
+                <div class="w-20 h-20 mb-6 flex items-center justify-center bg-white rounded-3xl shadow-sm text-3xl">
+                    📊
+                </div>
+                <h3 class="font-display font-black text-sm text-brand-dark mb-4 uppercase">Modelos Validados</h3>
+                <p class="text-[11px] text-slate-500 leading-relaxed font-medium">Aplicação de modelos de gestão de estoque já validados em outras operações de alta performance do setor.</p>
+            </div>
+
+            <!-- Pilar 2 -->
+            <div class="pillar-card bg-slate-50 p-10 rounded-[2.5rem] flex flex-col items-center text-center">
+                <div class="w-20 h-20 mb-6 flex items-center justify-center bg-white rounded-3xl shadow-sm text-3xl">
+                    🏷️
+                </div>
+                <h3 class="font-display font-black text-sm text-brand-dark mb-4 uppercase">Padrão SKU</h3>
+                <p class="text-[11px] text-slate-500 leading-relaxed font-medium">Criação de padrão lógico para os códigos SKU para identificação precisa em todos os canais.</p>
+            </div>
+
+            <!-- Pilar 3 -->
+            <div class="pillar-card bg-slate-50 p-10 rounded-[2.5rem] flex flex-col items-center text-center">
+                <div class="w-20 h-20 mb-6 flex items-center justify-center bg-white rounded-3xl shadow-sm text-3xl">
+                    🔍
+                </div>
+                <h3 class="font-display font-black text-sm text-brand-dark mb-4 uppercase">Estudo Técnico</h3>
+                <p class="text-[11px] text-slate-500 leading-relaxed font-medium">Auditoria e estudo das ferramentas disponíveis no mercado para viabilizar a execução otimizada do projeto.</p>
+            </div>
+
+            <!-- Pilar 4 -->
+            <div class="pillar-card bg-slate-50 p-10 rounded-[2.5rem] flex flex-col items-center text-center">
+                <div class="w-20 h-20 mb-6 flex items-center justify-center bg-white rounded-3xl shadow-sm text-3xl">
+                    💻
+                </div>
+                <h3 class="font-display font-black text-sm text-brand-dark mb-4 uppercase">Cadastro ERP</h3>
+                <p class="text-[11px] text-slate-500 leading-relaxed font-medium">Cadastro dos códigos SKU criados dentro do ERP para gestão unificada do estoque mestre.</p>
+            </div>
+
+            <!-- Pilar 5 -->
+            <div class="pillar-card bg-slate-50 p-10 rounded-[2.5rem] flex flex-col items-center text-center">
+                <div class="w-20 h-20 mb-6 flex items-center justify-center bg-white rounded-3xl shadow-sm text-3xl">
+                    📣
+                </div>
+                <h3 class="font-display font-black text-sm text-brand-dark mb-4 uppercase">Ajuste de Anúncios</h3>
+                <p class="text-[11px] text-slate-500 leading-relaxed font-medium">Implementação massiva da nova inteligência de dados em todos os anúncios ativos nas plataformas.</p>
+            </div>
+
+            <!-- Pilar 6 -->
+            <div class="pillar-card bg-slate-50 p-10 rounded-[2.5rem] flex flex-col items-center text-center">
+                <div class="w-20 h-20 mb-6 flex items-center justify-center bg-white rounded-3xl shadow-sm text-3xl">
+                    🔗
+                </div>
+                <h3 class="font-display font-black text-sm text-brand-dark mb-4 uppercase">Vínculo & Sync</h3>
+                <p class="text-[11px] text-slate-500 leading-relaxed font-medium">Vinculação definitiva para controle automático de estoque e sincronização em tempo real.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 2.5: EXECUÇÃO DO PROJETO (TIMELINE) -->
+    <section id="execucao" class="max-w-4xl mx-auto px-6 mb-20 section-spy">
+        <div class="text-center mb-16">
+            <h2 class="font-display font-black text-3xl text-brand-dark mb-2 uppercase">Execução do Projeto</h2>
+            <p class="text-slate-500 text-sm font-medium">Os desafios e etapas práticas da implementação</p>
+        </div>
+
+        <div class="space-y-12 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-200 before:to-transparent">
+            
+            <!-- Etapa 1 -->
+            <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                <div class="flex items-center justify-center w-10 h-10 rounded-full border-4 border-white bg-brand-primary text-white shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10 text-sm font-bold">1</div>
+                <div class="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 hover:border-brand-primary/30 transition-all">
+                    <h3 class="font-display font-bold text-lg text-brand-dark mb-2">Diagnóstico & Ferramenta</h3>
+                    <p class="text-slate-500 text-sm leading-relaxed mb-4">Identificamos que o <strong>Bling ERP</strong>, já utilizado na operação, possuía a funcionalidade nativa para o controle, definindo-o como o ambiente para execução do projeto.</p>
+                    <div class="text-[11px] bg-slate-50 p-3 rounded-xl text-slate-500 border border-slate-100">
+                        <span class="block font-bold text-brand-primary mb-1">Ação Chave:</span>
+                        Identificação da necessidade vital de padronização via códigos SKU para viabilizar o controle sistêmico.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Etapa 2 -->
+            <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                <div class="flex items-center justify-center w-10 h-10 rounded-full border-4 border-white bg-brand-primary text-white shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10 text-sm font-bold">2</div>
+                <div class="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 hover:border-brand-primary/30 transition-all">
+                    <h3 class="font-display font-bold text-lg text-brand-dark mb-2">A Evolução do Padrão</h3>
+                    <p class="text-slate-500 text-sm leading-relaxed mb-4">Criação da "Planilha Mestre" para cadastro de produtos.</p>
+                    <div class="space-y-3">
+                        <div class="flex items-start gap-3 opacity-60">
+                            <span class="text-xs font-bold text-red-400 bg-red-50 px-2 py-0.5 rounded">V1</span>
+                            <p class="text-[11px] text-slate-500">Resolveu o problema, mas gerou códigos excessivamente longos e complexos.</p>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <span class="text-xs font-bold text-brand-success bg-green-50 px-2 py-0.5 rounded">V2</span>
+                            <p class="text-[11px] text-slate-600 font-bold">Substituição pela versão atual: simples, curta e livre de dubla interpretação.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Etapa 3 -->
+            <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                <div class="flex items-center justify-center w-10 h-10 rounded-full border-4 border-white bg-brand-primary text-white shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10 text-sm font-bold">3</div>
+                <div class="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 hover:border-brand-primary/30 transition-all">
+                    <h3 class="font-display font-bold text-lg text-brand-dark mb-2">Migração & Ajustes</h3>
+                    <p class="text-slate-500 text-sm leading-relaxed mb-4">Extração massiva de dados dos anúncios para planilhas e upload em lote.</p>
+                    <div class="text-[11px] bg-slate-50 p-4 rounded-xl text-slate-500 border-l-4 border-orange-200">
+                        <p class="mb-2"><strong>O Desafio Real:</strong> A despadronização antiga causou atribuições erradas de SKU em variações durante o processo massivo.</p>
+                        <p class="text-brand-dark font-bold">Solução: Correção manual "um a um" para garantir integridade 100% antes do vínculo final.</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- SEÇÃO: O OBSTÁCULO INESPERADO -->
+    <section class="max-w-5xl mx-auto px-6 mb-32">
+        <div class="bg-brand-warning rounded-[3rem] p-10 md:p-16 border border-orange-100 relative overflow-hidden shadow-sm">
+            <!-- Icone de Alerta -->
+            <div class="absolute top-0 right-0 p-8 opacity-10 text-brand-warningText text-9xl leading-none select-none pointer-events-none">
+                &#9888;
+            </div>
+
+            <h3 class="font-display font-black text-2xl text-brand-warningText mb-6 uppercase tracking-tight flex items-center gap-3">
+                <span class="text-4xl">&#9888;</span> O Obstáculo Inesperado
+            </h3>
+            <p class="text-slate-600 font-medium leading-relaxed mb-10 max-w-2xl">
+                O plano parecia perfeito e bem encaminhado, mas a etapa final revelou barreiras técnicas críticas que ameaçavam a viabilidade do projeto.
+            </p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+                <!-- Problema 1: Volume de Dados -->
+                <div class="bg-white p-8 rounded-[2rem] border border-orange-100 shadow-sm flex items-start gap-4">
+                    <div class="bg-orange-100 text-brand-warningText w-10 h-10 rounded-full flex items-center justify-center shrink-0 font-bold text-xl">&infin;</div>
+                    <div>
+                        <h4 class="font-bold text-brand-dark mb-2 text-sm uppercase">Vínculo Manual Inviável</h4>
+                        <p class="text-xs text-slate-500 leading-relaxed">
+                            Para funcionar, seria necessário inserir manualmente os códigos em milhares de variações espalhadas por mais de <strong>7 contas de marketplaces</strong> diferentes. Uma tarefa humanamente impossível.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Problema 2: Limitação Técnica -->
+                <div class="bg-white p-8 rounded-[2rem] border border-orange-100 shadow-sm flex items-start gap-4">
+                    <div class="bg-orange-100 text-brand-warningText w-10 h-10 rounded-full flex items-center justify-center shrink-0 font-bold text-xl">&#10062;</div>
+                    <div>
+                        <h4 class="font-bold text-brand-dark mb-2 text-sm uppercase">Bloqueio Multi-CNPJ</h4>
+                        <p class="text-xs text-slate-500 leading-relaxed">
+                            Descobrimos que nativamente o ERP <strong>não consolidava estoques</strong> de múltiplos CNPJs. Sem isso, a operação continuaria fragmentada e cega. A saída seria a contratação de um <strong>HUB integrador</strong> para realizar esse processo.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Conclusão / Solução (Refatorado para Texto) -->
+            <div class="border-t-2 border-orange-200 pt-8 mt-8 text-center">
+                <p class="text-slate-500 font-medium text-sm mb-2">A única solução definitiva para o problema:</p>
+                <h4 class="font-display font-black text-3xl md:text-4xl text-brand-warningText uppercase tracking-tight">Migração de ERP</h4>
+            </div>
+        </div>
+    </section>
+
+    <!-- NOVA SEÇÃO: A SOLUÇÃO OLIST ERP -->
+    <section class="max-w-6xl mx-auto px-6 mb-32">
+        <div class="bg-white rounded-[3.5rem] shadow-xl overflow-hidden border border-slate-100">
+            <div class="p-12 md:p-16">
+                <!-- Header Solução -->
+                <div class="text-center mb-16">
+                    <h2 class="font-display font-black text-3xl text-brand-dark mb-6 uppercase tracking-tight">A Solução: ERP da Olist</h2>
+                    <!-- Logo Placeholder -->
+                    <div class="inline-flex items-center justify-center bg-brand-dark px-10 py-5 rounded-2xl mb-4">
+                        <img src="https://placehold.co/200x60/0f172a/ffffff?text=olist+ERP" alt="Logo Olist ERP" class="h-10 opacity-90">
+                    </div>
+                    <p class="text-slate-400 text-xs font-bold uppercase tracking-widest">(Antigo Tiny ERP)</p>
+                </div>
+
+                <!-- Comparativo Visual da Jornada -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-0 md:gap-16 relative">
+                    <!-- Divisor Vertical no Desktop -->
+                    <div class="hidden md:block absolute left-1/2 top-0 bottom-0 w-px bg-slate-100 -translate-x-1/2"></div>
+
+                    <!-- Lado Esquerdo: O Problema (Passado) -->
+                    <div class="flex flex-col items-center text-center opacity-70 grayscale transition-all hover:grayscale-0 hover:opacity-100">
+                        <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center text-3xl mb-6 text-slate-400">
+                            &#8635;
+                        </div>
+                        <h3 class="font-display font-bold text-lg text-slate-700 mb-2">Andando em Círculos</h3>
+                        <p class="text-slate-500 text-sm mb-6 max-w-xs">
+                            De <strong>Ago/2024</strong> a <strong>Fev/2025</strong>, o projeto ficou travado por limitações técnicas e operacionais.
+                        </p>
+                        <div class="bg-slate-100 text-slate-500 px-6 py-2 rounded-full font-bold text-sm border border-slate-200">
+                            6 Meses Perdidos
+                        </div>
+                    </div>
+
+                    <!-- Lado Direito: A Solução (Futuro/Presente) -->
+                    <div class="flex flex-col items-center text-center mt-12 md:mt-0 relative">
+                        <div class="w-16 h-16 bg-brand-olist/10 rounded-full flex items-center justify-center text-3xl mb-6 text-brand-olist">
+                            &#10004;
+                        </div>
+                        <h3 class="font-display font-bold text-lg text-brand-olist mb-2">A Virada de Chave</h3>
+                        <div class="text-left space-y-3 mb-8 max-w-xs mx-auto">
+                            <div class="flex items-center gap-3 text-sm text-slate-600">
+                                <span class="text-brand-olist font-bold">✓</span> Interface Intuitiva e Simples
+                            </div>
+                            <div class="flex items-center gap-3 text-sm text-slate-600">
+                                <span class="text-brand-olist font-bold">✓</span> Migração CNPJ por CNPJ
+                            </div>
+                            <div class="flex items-center gap-3 text-sm text-brand-dark font-bold bg-blue-50 p-2 rounded-lg border border-blue-100">
+                                <span class="text-brand-olist">★</span> Multiempresa Nativo
+                            </div>
+                        </div>
+                        <div class="bg-brand-olist text-white px-8 py-3 rounded-full font-bold text-sm shadow-lg shadow-blue-500/30 animate-pulse-slow">
+                            Resolvido em 1,5 Mês
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- NOVA SEÇÃO: ECOSSISTEMA CONECTADO E PILARES -->
+    <section class="max-w-6xl mx-auto px-6 mb-32 section-spy" id="integracao-sucesso">
+        <div class="bg-white rounded-[3.5rem] shadow-xl border border-slate-100 p-10 md:p-16">
+            
+            <!-- Header -->
+            <div class="text-center mb-12">
+                <h2 class="font-display font-black text-3xl text-brand-dark mb-4 uppercase">Ecossistema Conectado</h2>
+                <div class="inline-block bg-green-100 text-green-700 font-bold px-6 py-2 rounded-full text-sm border border-green-200">
+                    Execução em Recorde: 45 Dias
+                </div>
+            </div>
+
+            <!-- Grid de Integrações -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
+                <!-- ML -->
+                <div class="bg-yellow-50 p-6 rounded-3xl border border-yellow-100 text-center flex flex-col items-center justify-center min-h-[160px]">
+                    <img src="https://olist.com/_next/image/?url=https%3A%2F%2Fd3hw41hpah8tvx.cloudfront.net%2Fimages%2Fimg_integracao_mercadolivre_1e137e592b.png&w=384&q=75" alt="Mercado Livre" class="h-16 mb-4 object-contain mix-blend-multiply">
+                    <span class="block text-4xl font-black text-yellow-500 mb-1">2</span>
+                    <span class="text-[10px] md:text-xs font-bold text-slate-400 uppercase">Contas</span>
+                </div>
+                 <!-- Shopee -->
+                <div class="bg-orange-50 p-6 rounded-3xl border border-orange-100 text-center flex flex-col items-center justify-center min-h-[160px]">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Shopee_logo.svg/1200px-Shopee_logo.svg.png" alt="Shopee" class="h-12 mb-4 object-contain">
+                    <span class="block text-4xl font-black text-orange-500 mb-1">2</span>
+                    <span class="text-[10px] md:text-xs font-bold text-slate-400 uppercase">Contas</span>
+                </div>
+                 <!-- Shein -->
+                <div class="bg-slate-900 text-white p-6 rounded-3xl border border-slate-800 text-center flex flex-col items-center justify-center min-h-[160px]">
+                    <img src="https://olist.com/_next/image/?url=https%3A%2F%2Fd3hw41hpah8tvx.cloudfront.net%2Fimages%2Fshein_logo_parcerias_788563bbe5.png&w=256&q=75" alt="Shein" class="h-9 mb-4 object-contain brightness-0 invert">
+                    <span class="block text-4xl font-black mb-1">3</span>
+                    <span class="text-[10px] md:text-xs font-bold text-slate-400 uppercase">Contas</span>
+                </div>
+                 <!-- Bagy -->
+                <div class="bg-purple-50 p-6 rounded-3xl border border-purple-100 text-center flex flex-col items-center justify-center min-h-[160px]">
+                    <img src="https://tiny.com.br/help-content/images/integracoes/ecommerce/bagy.svg" alt="Bagy" class="h-9 mb-4 object-contain">
+                    <span class="block text-4xl font-black text-purple-500 mb-1">1</span>
+                    <span class="text-[10px] md:text-xs font-bold text-slate-400 uppercase">Integração</span>
+                </div>
+            </div>
+            
+            <!-- Nota de Consolidação -->
+            <div class="bg-slate-50 rounded-2xl p-6 text-center mb-16 border border-slate-100">
+                <p class="text-slate-500 text-sm font-medium leading-relaxed max-w-3xl mx-auto">
+                    <span class="font-bold text-brand-dark block mb-2 text-lg">3 CNPJs Totalmente Conectados</span> 
+                    Produtos cadastrados no ERP, estoques conectados entre si, plataformas sendo alimentadas de forma automática e centralizada no ERP, notas fiscais sem erros na geração.
+                </p>
+            </div>
+
+            <!-- Os 4 Pilares -->
+            <div class="border-t border-slate-100 pt-12">
+                <p class="text-center text-xs font-bold text-slate-400 uppercase tracking-widest mb-10">Os pilares da nova operação</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 text-center">
+                    <div class="p-4 group hover:-translate-y-2 transition-transform duration-300">
+                        <div class="w-14 h-14 bg-brand-primary text-white rounded-2xl flex items-center justify-center mx-auto mb-4 text-xl font-bold shadow-lg shadow-orange-200">1</div>
+                        <h4 class="font-display font-black text-brand-dark uppercase text-sm tracking-wide">Organização</h4>
+                    </div>
+                    <div class="p-4 group hover:-translate-y-2 transition-transform duration-300">
+                        <div class="w-14 h-14 bg-brand-primary text-white rounded-2xl flex items-center justify-center mx-auto mb-4 text-xl font-bold shadow-lg shadow-orange-200">2</div>
+                        <h4 class="font-display font-black text-brand-dark uppercase text-sm tracking-wide">Simplificação</h4>
+                    </div>
+                    <div class="p-4 group hover:-translate-y-2 transition-transform duration-300">
+                        <div class="w-14 h-14 bg-brand-primary text-white rounded-2xl flex items-center justify-center mx-auto mb-4 text-xl font-bold shadow-lg shadow-orange-200">3</div>
+                        <h4 class="font-display font-black text-brand-dark uppercase text-sm tracking-wide">Otimização</h4>
+                    </div>
+                    <div class="p-4 group hover:-translate-y-2 transition-transform duration-300">
+                        <div class="w-14 h-14 bg-brand-primary text-white rounded-2xl flex items-center justify-center mx-auto mb-4 text-xl font-bold shadow-lg shadow-orange-200">4</div>
+                        <h4 class="font-display font-black text-brand-dark uppercase text-xs md:text-sm tracking-wide">Automação <br> Operacional</h4>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- NOVA SEÇÃO: BENEFÍCIOS NA PRÁTICA (LÚDICO) -->
+    <section class="max-w-6xl mx-auto px-6 mb-32">
+        <div class="text-center mb-16">
+             <span class="text-brand-primary font-bold tracking-widest uppercase text-xs">A Nova Realidade</span>
+             <h2 class="font-display font-black text-3xl text-brand-dark mt-2 uppercase">Benefícios no Dia a Dia</h2>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
+            <!-- Benefício 1 -->
+            <div class="bg-white p-8 rounded-[2.5rem] shadow-lg border-2 border-transparent hover:border-brand-primary/20 transition-all hover:-translate-y-1 group">
+                <div class="w-14 h-14 bg-blue-50 text-blue-500 rounded-2xl flex items-center justify-center text-2xl mb-6 group-hover:scale-110 transition-transform">
+                    ⏱️
+                </div>
+                <h3 class="font-display font-bold text-lg text-brand-dark mb-3">Manhãs Mais Ágeis</h3>
+                <p class="text-slate-500 text-sm leading-relaxed">
+                    A geração de notas fiscais matinais reduziu em <strong class="text-blue-600">quase 1 hora</strong>. O que antes era tensão, virou agilidade livre de erros.
+                </p>
+            </div>
+
+            <!-- Benefício 2 -->
+            <div class="bg-white p-8 rounded-[2.5rem] shadow-lg border-2 border-transparent hover:border-brand-primary/20 transition-all hover:-translate-y-1 group">
+                <div class="w-14 h-14 bg-green-50 text-green-500 rounded-2xl flex items-center justify-center text-2xl mb-6 group-hover:scale-110 transition-transform">
+                    📉
+                </div>
+                <h3 class="font-display font-bold text-lg text-brand-dark mb-3">Estoque Consistente</h3>
+                <p class="text-slate-500 text-sm leading-relaxed">
+                    As pilhas de etiquetas paradas sumiram dia após dia. Uma redução drástica de <strong class="text-green-600">mais de 95%</strong> nos erros por inconsistência de estoque.
+                </p>
+            </div>
+
+            <!-- Benefício 3 -->
+            <div class="bg-white p-8 rounded-[2.5rem] shadow-lg border-2 border-transparent hover:border-brand-primary/20 transition-all hover:-translate-y-1 group">
+                <div class="w-14 h-14 bg-purple-50 text-purple-500 rounded-2xl flex items-center justify-center text-2xl mb-6 group-hover:scale-110 transition-transform">
+                    ⚡
+                </div>
+                <h3 class="font-display font-bold text-lg text-brand-dark mb-3">Sync Instantâneo</h3>
+                <p class="text-slate-500 text-sm leading-relaxed">
+                    Importação e vínculo de anúncios em minutos. O estoque é atualizado em todas as plataformas e variações em instantes.
+                </p>
+            </div>
+
+            <!-- Benefício 4 -->
+            <div class="bg-white p-8 rounded-[2.5rem] shadow-lg border-2 border-transparent hover:border-brand-primary/20 transition-all hover:-translate-y-1 group">
+                <div class="w-14 h-14 bg-orange-50 text-orange-500 rounded-2xl flex items-center justify-center text-2xl mb-6 group-hover:scale-110 transition-transform">
+                    🚀
+                </div>
+                <h3 class="font-display font-bold text-lg text-brand-dark mb-3">Liberdade Criativa</h3>
+                <p class="text-slate-500 text-sm leading-relaxed">
+                    O tempo ganho se transformou em liberdade para assumir novas demandas, permitindo que <strong class="text-orange-600">novos projetos</strong> pudessem surgir.
+                </p>
+            </div>
+        </div>
+
+        <!-- Disclaimer -->
+        <div class="bg-brand-olist text-white p-10 rounded-3xl relative overflow-hidden shadow-xl text-center md:text-left flex flex-col md:flex-row items-center gap-8">
+             <div class="hidden md:block text-6xl opacity-30">❝</div>
+             <div class="relative z-10 flex-1">
+                <p class="font-display font-bold text-lg md:text-xl leading-relaxed italic">
+                    "O Olist Tiny caiu como uma luva na operação e em poucos meses seu uso já era natural e rotineiro por todos que necessitavam lidar com ele."
+                </p>
+                <div class="mt-4 text-xs font-bold uppercase tracking-widest opacity-70">
+                    Integração Natural &bull; Adaptação Imediata
+                </div>
+             </div>
+        </div>
+    </section>
+
+    <!-- NOVA SEÇÃO: EXPANSÃO E ESCALABILIDADE -->
+    <section class="max-w-5xl mx-auto px-6 mb-32">
+        <div class="text-center mb-12">
+            <span class="text-brand-accent font-bold tracking-widest uppercase text-xs">Expansão</span>
+            <h2 class="font-display font-black text-3xl text-brand-dark mt-2 uppercase">Desafiando a Aplicação</h2>
+            <p class="text-slate-500 mt-4 max-w-2xl mx-auto font-medium">Alguns meses após a estabilização, o sistema foi desafiado por uma nova onda de crescimento.</p>
+        </div>
+
+        <div class="bg-gradient-to-br from-slate-900 to-slate-800 rounded-[3rem] p-10 md:p-16 text-white relative overflow-hidden shadow-2xl">
+            <!-- Decoration -->
+            <div class="absolute top-0 right-0 w-80 h-80 bg-brand-accent/20 blur-[100px] rounded-full pointer-events-none"></div>
+            <div class="absolute bottom-0 left-0 w-64 h-64 bg-brand-primary/10 blur-[80px] rounded-full pointer-events-none"></div>
+            
+            <div class="relative z-10">
+                <!-- Badge Central: 4º CNPJ -->
+                <div class="flex flex-col items-center mb-12">
+                    <!-- Animação ajustada para 3s (mais lenta) -->
+                    <div class="bg-white/10 backdrop-blur-md border border-white/20 px-8 py-4 rounded-full flex items-center gap-4 shadow-lg animate-bounce" style="animation-duration: 3s;">
+                        <!-- Logo Olist Oficial -->
+                        <img src="https://olist.com/logo_olist_rebrand.svg" alt="Olist" class="h-6 w-auto brightness-0 invert">
+                        
+                        <div class="bg-brand-success text-brand-dark w-8 h-8 rounded-full flex items-center justify-center font-bold text-lg shadow-glow">+</div>
+                        <span class="font-display font-black uppercase tracking-wider text-sm md:text-lg">Implantação do 4º CNPJ</span>
+                    </div>
+                    <div class="h-8 w-0.5 bg-white/20"></div> <!-- Linha conectora -->
+                </div>
+
+                <!-- Grid de Novos Canais -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-center items-stretch">
+                    <!-- ML - Card Amarelo + Logo Aumentado (h-24) -->
+                    <div class="bg-yellow-50 rounded-3xl p-8 border border-yellow-100 hover:bg-yellow-100 transition-all hover:-translate-y-2 group flex flex-col">
+                        <div class="text-[10px] text-yellow-700 uppercase font-bold tracking-widest mb-4 opacity-70 group-hover:opacity-100">Expansão Varejo</div>
+                        
+                        <!-- Logo Container -->
+                        <div class="h-32 flex items-center justify-center w-full">
+                            <img src="https://olist.com/_next/image/?url=https%3A%2F%2Fd3hw41hpah8tvx.cloudfront.net%2Fimages%2Fimg_integracao_mercadolivre_1e137e592b.png&w=384&q=75" 
+                                 alt="Mercado Livre" 
+                                 class="h-24 object-contain mix-blend-multiply opacity-90 group-hover:opacity-100 transition-opacity">
+                        </div>
+                        
+                        <p class="text-sm font-bold text-yellow-900 mt-auto">Nova Conta Oficial</p>
+                    </div>
+
+                    <!-- Shein - Fundo Preto -->
+                    <div class="bg-black rounded-3xl p-8 border border-slate-800 hover:border-slate-700 transition-all hover:-translate-y-2 group flex flex-col">
+                        <div class="text-[10px] text-slate-400 uppercase font-bold tracking-widest mb-4 opacity-70 group-hover:opacity-100">Expansão Varejo</div>
+                        
+                        <!-- Logo Container -->
+                        <div class="h-32 flex items-center justify-center w-full">
+                            <img src="https://olist.com/_next/image/?url=https%3A%2F%2Fd3hw41hpah8tvx.cloudfront.net%2Fimages%2Fshein_logo_parcerias_788563bbe5.png&w=256&q=75" alt="Shein" class="h-10 object-contain brightness-0 invert opacity-90 group-hover:opacity-100 transition-opacity">
+                        </div>
+                        
+                        <p class="text-sm font-bold text-white mt-auto">Nova Conta Oficial</p>
+                    </div>
+
+                    <!-- Vesti - Logo em SVG Texto -->
+                    <div class="bg-white/5 rounded-3xl p-8 border border-white/5 hover:bg-white/10 transition-all hover:-translate-y-2 group flex flex-col">
+                        <div class="text-[10px] text-purple-400 uppercase font-bold tracking-widest mb-4 opacity-70 group-hover:opacity-100">Novo Canal B2B</div>
+                        
+                        <!-- Logo Container -->
+                        <div class="h-32 flex items-center justify-center w-full">
+                            <!-- SVG Vesti Text-based Logo -->
+                            <svg viewBox="0 0 200 60" class="h-16 w-auto fill-current text-white" xmlns="http://www.w3.org/2000/svg">
+                                <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" font-family="'Montserrat', sans-serif" font-weight="900" font-size="60" letter-spacing="-3">Vesti</text>
+                            </svg>
+                        </div>
+                        
+                        <p class="text-sm font-bold text-white mt-auto">Atacado Online</p>
+                    </div>
+                </div>
+
+                <!-- Conclusão de Sucesso -->
+                <div class="mt-12 text-center border-t border-white/10 pt-10">
+                    <p class="text-slate-300 leading-relaxed max-w-3xl mx-auto font-light text-sm md:text-base">
+                        <span class="text-2xl block mb-4">🚀</span>
+                        "Embora plataformas novas ofereçam novos desafios e curvas de aprendizado, conseguimos rodar no <strong class="text-white font-bold">mesmo padrão de excelência</strong> em todas elas. O resultado foi um índice de sucesso total em tudo o que planejamos."
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- NOVA SEÇÃO: O DESAFIO DOS KITS (PROBLEMA E SOLUÇÃO) -->
+    <section class="max-w-6xl mx-auto px-6 mb-32">
+        <div class="bg-white rounded-[3.5rem] shadow-xl border border-slate-100 overflow-hidden">
+            <div class="grid grid-cols-1 md:grid-cols-2">
+                <!-- Lado Esquerdo: O Problema (Limitação e Tentativa Externa) -->
+                <div class="p-12 md:p-16 bg-slate-50 border-r border-slate-100 flex flex-col justify-center relative">
+                    <!-- Badge de Erro -->
+                    <div class="inline-block bg-red-100 text-red-600 font-bold px-4 py-1.5 rounded-full mb-6 text-[10px] uppercase tracking-widest w-fit">
+                        Limitação Técnica
+                    </div>
+                    
+                    <h3 class="font-display font-black text-2xl text-brand-dark mb-4">O Dilema dos Kits</h3>
+                    <p class="text-slate-600 text-sm leading-relaxed mb-8">
+                        Kits compostos enfrentavam erros de contagem no estoque multiempresa. A contagem individual por conta gerava saldos incorretos, afetando a disponibilidade real dos produtos.
+                    </p>
+                    
+                    <!-- Card de Tentativa Frustrada -->
+                    <div class="bg-white p-6 rounded-3xl border border-red-100 shadow-sm relative group hover:border-red-200 transition-colors">
+                        <div class="absolute -top-3 -right-3 bg-red-500 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-lg shadow-md group-hover:scale-110 transition-transform">!</div>
+                        <h4 class="font-bold text-slate-700 text-xs uppercase mb-2 flex items-center gap-2">
+                            <span>🛠️</span> Soluções de Terceiros
+                        </h4>
+                        <p class="text-xs text-slate-500 leading-relaxed mb-2">
+                            Contratamos ferramentas externas para tentar corrigir a falha (uma demanda antiga da comunidade desde 2020).
+                        </p>
+                        <p class="text-xs text-red-500 font-bold bg-red-50 p-2 rounded-lg">
+                            Resultado: Dados incorretos e prejuízos operacionais.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Lado Direito: A Boa Notícia (Atualização Nativa) -->
+                <div class="p-12 md:p-16 bg-brand-olist text-white flex flex-col justify-center relative overflow-hidden">
+                    <!-- Elementos Decorativos de Fundo -->
+                    <div class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
+                    <div class="absolute bottom-0 left-0 w-40 h-40 bg-brand-accent/30 rounded-full blur-2xl -ml-10 -mb-10 pointer-events-none"></div>
+
+                    <div class="relative z-10">
+                        <div class="w-14 h-14 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center text-3xl mb-6 shadow-lg animate-pulse-slow">
+                            🎉
+                        </div>
+                        <h3 class="font-display font-black text-2xl mb-4">A Virada Nativa</h3>
+                        <p class="text-blue-100 text-sm leading-relaxed mb-8 font-medium">
+                            Durante o período de tentativas externas, recebemos a melhor notícia possível: a própria Olist anunciou a <strong>atualização do ERP</strong>.
+                        </p>
+                        
+                        <div class="inline-flex items-center gap-4 bg-white/10 border border-white/20 p-5 rounded-2xl backdrop-blur-sm hover:bg-white/20 transition-colors cursor-default">
+                            <div class="relative flex h-3 w-3 shrink-0">
+                              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                              <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                            </div>
+                            <div>
+                                <span class="block font-bold text-xs tracking-wide text-white uppercase">Solução Oficial Confirmada</span>
+                                <span class="block text-[10px] text-blue-200 mt-1 leading-tight">Função nativa para Kits em breve disponível para sanar nossa dor definitivamente.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- NOVA SEÇÃO: NOSSA OPERAÇÃO HOJE (Substituindo Resultados / Estilo Branco e Limpo) -->
+    <section id="operacao-hoje" class="max-w-6xl mx-auto px-6 mb-32 section-spy">
+        <div class="bg-white rounded-[3.5rem] shadow-xl border border-slate-100 p-10 md:p-16">
+            
+            <!-- Header -->
+            <div class="text-center mb-12">
+                <span class="text-brand-primary font-bold tracking-widest uppercase text-xs">Raio-X</span>
+                <h2 class="font-display font-black text-3xl text-brand-dark mt-2 mb-4 uppercase">Nossa Operação Hoje</h2>
+                <div class="inline-block bg-slate-100 text-slate-600 font-bold px-6 py-2 rounded-full text-xs border border-slate-200 uppercase tracking-wide">
+                    Estrutura Atual Consolidada
+                </div>
+            </div>
+
+            <!-- Grid de Canais (Estilo Card Branco/Colorido) -->
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-6 mb-12">
+                
+                <!-- Card 1: CNPJs -->
+                <div class="bg-slate-50 p-6 rounded-3xl border border-slate-100 text-center flex flex-col items-center justify-center hover:bg-slate-100 transition-colors">
+                    <div class="text-4xl mb-3">🏢</div>
+                    <span class="block text-4xl font-black text-brand-dark mb-1">4</span>
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">CNPJs Ativos</span>
+                </div>
+
+                <!-- Card 2: Mercado Livre (Logo Aumentado) -->
+                <div class="bg-yellow-50 p-6 rounded-3xl border border-yellow-100 text-center flex flex-col items-center justify-center hover:bg-yellow-100 transition-colors">
+                    <img src="https://olist.com/_next/image/?url=https%3A%2F%2Fd3hw41hpah8tvx.cloudfront.net%2Fimages%2Fimg_integracao_mercadolivre_1e137e592b.png&w=384&q=75" 
+                         alt="ML" 
+                         class="h-24 mx-auto mb-3 object-contain mix-blend-multiply">
+                    <span class="block text-4xl font-black text-yellow-600 mb-1">3</span>
+                    <span class="text-[10px] font-bold text-yellow-800/60 uppercase tracking-widest">Contas Oficiais</span>
+                </div>
+
+                <!-- Card 3: Shein -->
+                <div class="bg-black p-6 rounded-3xl border border-slate-800 text-center flex flex-col items-center justify-center hover:bg-slate-900 transition-colors">
+                     <img src="https://olist.com/_next/image/?url=https%3A%2F%2Fd3hw41hpah8tvx.cloudfront.net%2Fimages%2Fshein_logo_parcerias_788563bbe5.png&w=256&q=75" alt="Shein" class="h-8 mx-auto mb-4 object-contain brightness-0 invert">
+                    <span class="block text-4xl font-black text-white mb-1">4</span>
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Contas Oficiais</span>
+                </div>
+
+                <!-- Card 4: Shopee -->
+                <div class="bg-orange-50 p-6 rounded-3xl border border-orange-100 text-center flex flex-col items-center justify-center hover:bg-orange-100 transition-colors">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Shopee_logo.svg/1200px-Shopee_logo.svg.png" alt="Shopee" class="h-10 mx-auto mb-3 object-contain">
+                    <span class="block text-4xl font-black text-orange-500 mb-1">2</span>
+                    <span class="text-[10px] font-bold text-orange-800/60 uppercase tracking-widest">Contas Oficiais</span>
+                </div>
+
+                <!-- Card 5: Bagy -->
+                <div class="bg-purple-50 p-6 rounded-3xl border border-purple-100 text-center flex flex-col items-center justify-center hover:bg-purple-100 transition-colors">
+                    <img src="https://tiny.com.br/help-content/images/integracoes/ecommerce/bagy.svg" alt="Bagy" class="h-8 mx-auto mb-4 object-contain">
+                    <span class="block text-4xl font-black text-purple-600 mb-1">1</span>
+                    <span class="text-[10px] font-bold text-purple-800/60 uppercase tracking-widest">Loja Virtual</span>
+                </div>
+
+                <!-- Card 6: Vesti -->
+                <div class="bg-green-50 p-6 rounded-3xl border border-green-100 text-center flex flex-col items-center justify-center hover:bg-green-100 transition-colors">
+                    <!-- SVG Vesti Text-based Logo (Green Version) -->
+                    <div class="h-8 flex items-center justify-center mb-4 text-green-600">
+                        <svg viewBox="0 0 200 60" class="h-full w-auto fill-current" xmlns="http://www.w3.org/2000/svg">
+                            <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" font-family="'Montserrat', sans-serif" font-weight="900" font-size="60" letter-spacing="-3">Vesti</text>
+                        </svg>
+                    </div>
+                    <span class="block text-4xl font-black text-green-600 mb-1">1</span>
+                    <span class="text-[10px] font-bold text-green-800/60 uppercase tracking-widest">B2B Atacado</span>
+                </div>
+            </div>
+
+            <!-- Nota de Performance -->
+            <div class="bg-brand-light rounded-2xl p-8 text-center border border-slate-100">
+                <p class="text-slate-600 font-medium leading-relaxed max-w-2xl mx-auto">
+                    <span class="block text-2xl mb-3">⚙️</span>
+                    "O estoque roda automático, ainda com poucos erros (mesmo que eles existam pontualmente), e as <strong class="text-brand-success">rupturas seguem totalmente controladas</strong>."
+                </p>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- NOVA SEÇÃO: CONEXÃO OLIST (POWERED BY) - ATUALIZADO -->
+    <section class="max-w-6xl mx-auto px-6 mb-32">
+        <div class="relative flex flex-col items-center justify-center">
+            
+            <!-- 1. BLOCO SUPERIOR: ERP (Adicionado) -->
+            <div class="bg-white border-2 border-slate-200 shadow-md rounded-xl px-8 py-3 flex items-center gap-3 z-10 relative transition-transform hover:scale-105 duration-300">
+                <i class="ph ph-database text-2xl text-brand-olist"></i>
+                <span class="font-bold text-brand-dark text-sm uppercase tracking-wide">Seu ERP</span>
+            </div>
+
+            <!-- 2. LINHA DE CONEXÃO (Curta e Sólida para aproximar) -->
+            <div class="h-6 w-1 bg-brand-olist/20"></div>
+
+            <!-- Badge Central (Infraestrutura Unificada) -->
+            <div class="bg-white rounded-[2.5rem] p-8 md:p-12 shadow-2xl border border-slate-100 text-center relative overflow-hidden max-w-5xl w-full group">
+                
+                <!-- Background Glow -->
+                <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-brand-olist/5 via-transparent to-transparent opacity-50 pointer-events-none"></div>
+
+                <div class="flex flex-col items-center mb-8">
+                    <p class="text-slate-400 text-[10px] font-black uppercase tracking-[0.3em] mb-4">Infraestrutura Unificada</p>
+                    <img src="https://d3hw41hpah8tvx.cloudfront.net/images/logo_olist_rebrand_62df2f9c0a.svg" alt="Olist" class="h-10 md:h-14 w-auto object-contain mb-2">
+                </div>
+                
+                <!-- GRID DOS 4 PILARES (Conteúdo Atualizado com Ícones SVG Personalizados) -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full relative z-10">
+                    
+                    <!-- Pilar 1: Estoque (Prateleira) -->
+                    <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 text-left group/card relative overflow-hidden">
+                         <div class="w-12 h-12 bg-white border border-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center mb-4 shadow-sm group-hover/card:scale-110 transition-transform relative z-10">
+                            <!-- SVG: Prateleira (Estoque) -->
+                            <svg class="w-8 h-8 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M4 4H20V20H4V4M6 6V9H18V6H6M6 11V14H18V11H6M6 16V18H18V16H6Z"/>
+                            </svg>
+                        </div>
+                        <h4 class="font-bold text-brand-dark mb-1 text-sm relative z-10">Estoque</h4>
+                        <p class="text-[11px] text-slate-500 leading-relaxed relative z-10">Centralização total. Vendeu em um, baixa em todos.</p>
+                    </div>
+
+                    <!-- Pilar 2: Marketplaces (Lojinha) -->
+                    <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 text-left group/card relative overflow-hidden">
+                        <div class="w-12 h-12 bg-white border border-amber-100 text-amber-600 rounded-xl flex items-center justify-center mb-4 shadow-sm group-hover/card:scale-110 transition-transform relative z-10">
+                            <!-- SVG: Lojinha -->
+                            <svg class="w-8 h-8 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 18H6V14H12M21 14V12L20 7H4L3 12V14H4V20H14V14H18V20H20V14M20 4H4V6H20V4Z"/>
+                            </svg>
+                        </div>
+                        <h4 class="font-bold text-brand-dark mb-1 text-sm relative z-10">Marketplaces</h4>
+                        <p class="text-[11px] text-slate-500 leading-relaxed relative z-10">Conexão nativa com múltiplos canais de venda.</p>
+                    </div>
+
+                    <!-- Pilar 3: Faturamento (Nota Fiscal) -->
+                    <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 text-left group/card relative overflow-hidden">
+                        <div class="w-12 h-12 bg-white border border-sky-100 text-sky-600 rounded-xl flex items-center justify-center mb-4 shadow-sm group-hover/card:scale-110 transition-transform relative z-10">
+                            <!-- SVG: Nota Fiscal -->
+                            <svg class="w-8 h-8 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M14 2H6C4.89 2 4 2.89 4 4V20C4 21.11 4.89 22 6 22H18C19.11 22 20 21.11 20 20V8L14 2M18 20H6V4H13V9H18V20M8 12V14H16V12H8M8 16V18H13V16H8Z"/>
+                                <path d="M15 11h-2v2h2v-2zm0 4h-2v2h2v-2z" opacity="0.3"/>
+                            </svg>
+                        </div>
+                        <h4 class="font-bold text-brand-dark mb-1 text-sm relative z-10">Faturamento</h4>
+                        <p class="text-[11px] text-slate-500 leading-relaxed relative z-10">Emissão automática de notas fiscais (NFe).</p>
+                    </div>
+
+                    <!-- Pilar 4: Multiempresas (Prédio Único) -->
+                    <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 text-left group/card relative overflow-hidden">
+                        <div class="w-12 h-12 bg-white border border-purple-100 text-purple-600 rounded-xl flex items-center justify-center mb-4 shadow-sm group-hover/card:scale-110 transition-transform relative z-10">
+                            <!-- SVG: Prédio Único -->
+                            <svg class="w-8 h-8 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 2L4 6V22H20V6L12 2M18 20H6V7.5L12 4.5L18 7.5V20M10 10H14V12H10V10M10 14H14V16H10V14Z"/>
+                            </svg>
+                        </div>
+                        <h4 class="font-bold text-brand-dark mb-1 text-sm relative z-10">Multiempresas</h4>
+                        <p class="text-[11px] text-slate-500 leading-relaxed relative z-10">Gestão de múltiplos CNPJs no mesmo painel.</p>
+                    </div>
+
+                </div>
+
+                <!-- Círculos de Conexão (Decorativos) -->
+                <div class="absolute -left-2 top-1/2 -translate-y-1/2 w-2 h-2 bg-brand-olist rounded-full opacity-20"></div>
+                <div class="absolute -right-2 top-1/2 -translate-y-1/2 w-2 h-2 bg-brand-olist rounded-full opacity-20"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- NOVA SEÇÃO: PRÓXIMOS PASSOS -->
+    <section id="proximos-passos" class="max-w-6xl mx-auto px-6 mb-32 section-spy">
+        <div class="text-center mb-16">
+            <span class="text-brand-primary font-bold tracking-widest uppercase text-xs">O Futuro</span>
+            <h2 class="font-display font-black text-3xl text-brand-dark mt-2 uppercase">Próximos Passos & Desafios</h2>
+            <p class="text-slate-500 mt-4 max-w-2xl mx-auto font-medium">
+                A evolução é contínua. Mapeamos as frentes estratégicas para consolidar a eficiência e expandir os resultados ainda este ano.
+            </p>
+        </div>
+
+        <!-- Grid de Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            
+            <!-- Card 1: Supply Chain & Operação -->
+            <div class="bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-xl relative overflow-hidden group">
+                <div class="absolute top-0 right-0 p-6 opacity-5 text-brand-dark text-9xl leading-none pointer-events-none transition-transform group-hover:scale-110">
+                    ⚙️
+                </div>
+                
+                <div class="flex items-center gap-4 mb-8">
+                    <div class="w-12 h-12 bg-blue-50 text-brand-olist rounded-xl flex items-center justify-center text-2xl">
+                        📦
+                    </div>
+                    <h3 class="font-display font-bold text-xl text-brand-dark">Cadeia de Suprimentos</h3>
+                </div>
+                
+                <div class="space-y-6">
+                    <!-- Item -->
+                    <div>
+                        <h4 class="font-bold text-brand-dark text-sm mb-2 flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                            Cálculo de Fabricação
+                        </h4>
+                        <p class="text-xs text-slate-500 leading-relaxed pl-4 border-l-2 border-slate-100">
+                            Visualização eficiente da necessidade de produção (estoque de segurança vs. demanda real) por modelo, cor e tamanho.
+                        </p>
+                    </div>
+                    <!-- Item -->
+                    <div>
+                        <h4 class="font-bold text-brand-dark text-sm mb-2 flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                            Checkout de Pedidos (Bipagem)
+                        </h4>
+                        <p class="text-xs text-slate-500 leading-relaxed pl-4 border-l-2 border-slate-100">
+                            Implantação de conferência via código de barras no ERP para zerar erros de envio e elevar a experiência do cliente.
+                        </p>
+                    </div>
+                    <!-- Item -->
+                    <div>
+                        <h4 class="font-bold text-brand-dark text-sm mb-2 flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                            Categorização Automática
+                        </h4>
+                        <p class="text-xs text-slate-500 leading-relaxed pl-4 border-l-2 border-slate-100">
+                            Vínculo de categorias no ERP para automação total no envio de novos produtos para as plataformas.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Coluna da Direita (Marketing + TI) -->
+            <div class="space-y-8">
+                
+                <!-- Card Marketing -->
+                <div class="bg-brand-dark text-white rounded-[2.5rem] p-10 shadow-xl relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 w-64 h-64 bg-brand-primary/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
+                    
+                    <div class="flex items-center gap-4 mb-6 relative z-10">
+                        <div class="w-12 h-12 bg-white/10 text-brand-primary rounded-xl flex items-center justify-center text-2xl">
+                            🚀
+                        </div>
+                        <h3 class="font-display font-bold text-xl">Marketing & Growth</h3>
+                    </div>
+
+                    <div class="space-y-4 relative z-10">
+                        <div class="bg-white/5 p-4 rounded-2xl border border-white/10 hover:bg-white/10 transition-colors">
+                            <h4 class="font-bold text-sm mb-1 text-brand-primary">Tráfego Pago (Google Ads)</h4>
+                            <p class="text-[10px] text-slate-300 leading-relaxed">
+                                Campanhas de busca para captar clientes qualificados para o varejo (site).
+                            </p>
+                        </div>
+                        <div class="bg-white/5 p-4 rounded-2xl border border-white/10 hover:bg-white/10 transition-colors">
+                            <h4 class="font-bold text-sm mb-1 text-brand-primary">Otimização Meta Ads</h4>
+                            <p class="text-[10px] text-slate-300 leading-relaxed">
+                                Revisão profunda de métricas e parametrizações para maximizar o ROAS atual.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card TI -->
+                <div class="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-lg group hover:border-brand-primary/30 transition-colors">
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-10 h-10 bg-slate-100 text-slate-600 rounded-xl flex items-center justify-center text-xl">
+                            💻
+                        </div>
+                        <div>
+                            <h3 class="font-display font-bold text-lg text-brand-dark">Infraestrutura de TI</h3>
+                            <p class="text-[10px] text-slate-400 font-bold uppercase">Segurança & Organização</p>
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-500 leading-relaxed">
+                        <strong>Reestruturação de Usuários:</strong> Individualização de logins e aproveitamento total das licenças Office 365 para maior segurança e rastreabilidade.
+                    </p>
+                </div>
+
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Footer Geral -->
+    <footer class="bg-white border-t border-slate-200 py-8 mt-8">
+        <div class="container mx-auto px-6 text-center">
+            <p class="text-slate-400 text-sm">
+                &copy; 2024-2026 Projeto Brilho Trend. Direitos reservados aos executores do projeto.
+            </p>
+        </div>
+    </footer>
+
+    <!-- Scripts de Interatividade -->
+    <script>
+        function openModal(type) {
+            const overlay = document.getElementById('modalOverlay');
+            const title = document.getElementById('modalTitle');
+            const content = document.getElementById('modalContent');
+            const iconContainer = document.getElementById('modalIconContainer');
+
+            overlay.style.display = 'flex';
+            setTimeout(() => overlay.style.opacity = '1', 10);
+
+            // Conteúdo dinâmico
+            if(type === 'sku') {
+                iconContainer.innerHTML = '&#9442;';
+                iconContainer.className = 'text-5xl mb-6 text-red-500';
+                title.innerText = "SKU's Despadronizados";
+                content.innerText = "Cada marketplace possuía um código diferente para o mesmo produto. Isso impedia que o sistema soubesse que o 'Vestido X' no Mercado Livre era o mesmo 'Vestido Y' na Shopee, tornando impossível a baixa automática de estoque.";
+            } else if(type === 'erp') {
+                iconContainer.innerHTML = '&#9881;';
+                iconContainer.className = 'text-5xl mb-6 text-red-500';
+                title.innerText = "ERP Isolado";
+                content.innerText = "O sistema de gestão (ERP) funcionava apenas como um emissor de notas fiscais básico. Ele não recebia informações de vendas dos canais e nem enviava atualizações de saldo, operando totalmente offline do ecossistema de vendas.";
+            } else if(type === 'manual') {
+                iconContainer.innerHTML = '&#9997;';
+                iconContainer.className = 'text-5xl mb-6 text-red-500';
+                title.innerText = "Fluxo Manual";
+                content.innerText = "Para cada venda realizada, a equipe precisava entrar manualmente em todos os outros canais para pausar ou diminuir o estoque do produto vendido. Um processo lento, sujeito a erros e que consumia horas produtivas.";
+            } else if(type === 'ruptura') {
+                iconContainer.innerHTML = '&#10060;';
+                iconContainer.className = 'text-5xl mb-6 text-red-500';
+                title.innerText = "Ruptura Total";
+                content.innerText = "Como o estoque não era atualizado em tempo real, era comum vender um produto que já havia acabado físico. Isso gerava cancelamentos, reclamações e penalizações severas nas contas dos marketplaces.";
+            }
+        }
+
+        function closeModal() {
+            const overlay = document.getElementById('modalOverlay');
+            overlay.style.opacity = '0';
+            setTimeout(() => overlay.style.display = 'none', 300);
+        }
+
+        // Fechar modal ao clicar fora
+        window.onclick = function(event) {
+            const overlay = document.getElementById('modalOverlay');
+            if (event.target == overlay) {
+                closeModal();
+            }
+        }
+
+        // ScrollSpy para Navbar Ativa
+        document.addEventListener('DOMContentLoaded', () => {
+            const sections = document.querySelectorAll('.section-spy');
+            const navLinks = document.querySelectorAll('.nav-link');
+            const navHome = document.getElementById('nav-home'); // Seleciona o botão Início
+
+            // Função auxiliar para resetar estilos
+            const resetNavLinks = () => {
+                navLinks.forEach(link => {
+                    link.classList.remove('text-brand-primary', 'border-brand-primary', 'bg-brand-primary/10');
+                    link.classList.add('text-slate-300', 'border-transparent');
+                });
+                // Reset específico para o botão home caso ele não tenha a classe nav-link (mas aqui tem)
+                if(navHome) {
+                     navHome.classList.remove('text-brand-primary', 'border-brand-primary', 'bg-brand-primary/10');
+                     navHome.classList.add('text-slate-300', 'border-transparent');
+                }
+            };
+
+            // Função para ativar um link específico
+            const activateLink = (link) => {
+                if (link) {
+                    resetNavLinks();
+                    link.classList.remove('text-slate-300', 'border-transparent');
+                    link.classList.add('text-brand-primary', 'border-brand-primary', 'bg-brand-primary/10');
+                    
+                    // Scroll horizontal da navbar mobile
+                    link.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                }
+            };
+
+            // 1. Monitorar Scroll para o botão "Início" (Topo da página)
+            window.addEventListener('scroll', () => {
+                if (window.scrollY < 100) { // Se estiver nos primeiros 100px
+                    activateLink(navHome);
+                }
+            });
+
+            // 2. Intersection Observer para as seções
+            const observerOptions = {
+                root: null,
+                rootMargin: '-30% 0px -70% 0px', 
+                threshold: 0
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting && window.scrollY >= 100) { // Só ativa se não estiver no topo absoluto
+                        const id = entry.target.getAttribute('id');
+                        const activeLink = document.querySelector(`.nav-link[href="#${id}"]`);
+                        activateLink(activeLink);
+                    }
+                });
+            }, observerOptions);
+
+            sections.forEach(section => observer.observe(section));
+            
+            // Ativa o botão Início inicialmente se estiver no topo
+            if (window.scrollY < 100) {
+                activateLink(navHome);
+            }
+        });
+    </script>
+
+</body>
+</html>
